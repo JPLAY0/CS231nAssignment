@@ -18,14 +18,13 @@ ipython-genutils==0.2.0
 ipywidgets==7.4.2
 jedi==0.13.3
 Jinja2==2.10
-json5==0.8.5
 jsonschema==3.0.1
 jupyter==1.0.0
-jupyter-client==5.3.1
+jupyter-client==5.2.4
 jupyter-console==6.0.0
 jupyter-core==4.4.0
-jupyterlab==1.0.9
-jupyterlab-server==1.0.6
+jupyterlab==0.35.4
+jupyterlab-server==0.2.0
 kiwisolver==1.0.1
 MarkupSafe==1.1.1
 matplotlib==3.0.3
@@ -33,7 +32,7 @@ mistune==0.8.4
 nbconvert==5.4.1
 nbdime==1.0.5
 nbformat==4.4.0
-notebook==6.0.1
+notebook==5.7.8
 numpy==1.16.2
 pandocfilters==1.4.2
 parso==0.3.4
@@ -56,7 +55,7 @@ six==1.12.0
 smmap2==2.0.5
 terminado==0.8.2
 testpath==0.4.2
-tornado==6.0.3
+tornado==6.0.2
 traitlets==4.3.2
 urllib3==1.24.1
 wcwidth==0.1.7
