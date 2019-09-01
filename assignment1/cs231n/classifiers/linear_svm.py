@@ -43,7 +43,6 @@ def svm_loss_naive(W, X, y, reg):
                 # Right now the loss is a sum over all training examples, but we want it
     # to be an average instead so we divide by num_train.
     # X.T (D,N) loss (N,C)
-    # dW = (X.T @ loss) / num_train + reg * W * W
     dW /= num_train
     dW += reg * W
     loss /= num_train
@@ -52,7 +51,6 @@ def svm_loss_naive(W, X, y, reg):
     loss += reg * np.sum(W * W)
 
     #############################################################################
-    # TODO:                                                                     #
     # Compute the gradient of the loss function and store it dW.                #
     # Rather that first computing the loss and then computing the derivative,   #
     # it may be simpler to compute the derivative at the same time that the     #
@@ -76,13 +74,20 @@ def svm_loss_vectorized(W, X, y, reg):
     dW = np.zeros(W.shape)  # initialize the gradient as zero
 
     #############################################################################
-    # TODO:                                                                     #
     # Implement a vectorized version of the structured SVM loss, storing the    #
     # result in loss.                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_train = X.shape[0]
+    scores = X @ W  # ( N*C )
+    correct_class_score = scores[np.arange(num_train), y].reshape((-1, 1))  # (N,1)
+    margin = np.clip(scores - correct_class_score + 1, 0, None)  # delta=1
+    margin[np.arange(num_train), y] = 0
+    loss += np.sum(margin)
+
+    loss /= num_train
+    loss += reg * np.sum(W * W)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -97,7 +102,9 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+
+    dW /= num_train
+    dW += reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
