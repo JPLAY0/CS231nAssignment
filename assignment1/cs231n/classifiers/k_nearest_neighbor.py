@@ -1,4 +1,5 @@
 import numpy as np
+from collections import Counter
 
 
 class KNearestNeighbor(object):
@@ -166,7 +167,6 @@ class KNearestNeighbor(object):
             # label.                                                                #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-            from collections import Counter
             y_pred[i] = Counter(closest_y).most_common(1)[0][0]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

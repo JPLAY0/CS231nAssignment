@@ -1,7 +1,4 @@
-from builtins import range
 import numpy as np
-from random import shuffle
-from past.builtins import xrange
 
 
 def svm_loss_naive(W, X, y, reg):
@@ -41,7 +38,7 @@ def svm_loss_naive(W, X, y, reg):
                 dW[:, y[i]] -= X[i]
 
                 # Right now the loss is a sum over all training examples, but we want it
-    # to be an average instead so we divide by num_train.
+    # to be an average in：stead so we divide by num_train.
     # X.T (D,N) loss (N,C)
     dW /= num_train
     dW += reg * W
@@ -92,7 +89,6 @@ def svm_loss_vectorized(W, X, y, reg):
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     #############################################################################
-    # TODO:                                                                     #
     # Implement a vectorized version of the gradient for the structured SVM     #
     # loss, storing the result in dW.                                           #
     #                                                                           #
@@ -102,6 +98,11 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    ret = np.zeros(scores.shape)
+    ret[margin != 0] = 1
+    ret[range(num_train), y] = -ret.sum(1)
+
+    dW += X.T @ ret
 
     dW /= num_train
     dW += reg * W
