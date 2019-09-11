@@ -39,7 +39,6 @@ def sgd(w, dw, config=None):
     """
     if config is None: config = {}
     config.setdefault('learning_rate', 1e-2)
-
     w -= config['learning_rate'] * dw
     return w, config
 
@@ -62,12 +61,14 @@ def sgd_momentum(w, dw, config=None):
 
     next_w = None
     ###########################################################################
-    # TODO: Implement the momentum update formula. Store the updated value in #
+    # Implement the momentum update formula. Store the updated value in #
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    v = config['momentum'] * v - config['learning_rate'] * dw
+    w += v
+    next_w = w
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -76,7 +77,6 @@ def sgd_momentum(w, dw, config=None):
     config['velocity'] = v
 
     return next_w, config
-
 
 
 def rmsprop(w, dw, config=None):
@@ -92,20 +92,22 @@ def rmsprop(w, dw, config=None):
     - cache: Moving average of second moments of gradients.
     """
     if config is None: config = {}
-    config.setdefault('learning_rate', 1e-2)
-    config.setdefault('decay_rate', 0.99)
-    config.setdefault('epsilon', 1e-8)
+    learning_rate = config.setdefault('learning_rate', 1e-2)
+    decay_rate = config.setdefault('decay_rate', 0.99)
+    epslion = config.setdefault('epsilon', 1e-8)
     config.setdefault('cache', np.zeros_like(w))
 
     next_w = None
     ###########################################################################
-    # TODO: Implement the RMSprop update formula, storing the next value of w #
+    # Implement the RMSprop update formula, storing the next value of w       #
     # in the next_w variable. Don't forget to update cache value stored in    #
     # config['cache'].                                                        #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    config['cache'] = decay_rate * config['cache'] + (1 - decay_rate) * dw ** 2
+    w += -learning_rate * dw / (np.sqrt(config['cache'] + epslion))
+    next_w = w
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -131,8 +133,8 @@ def adam(w, dw, config=None):
     """
     if config is None: config = {}
     config.setdefault('learning_rate', 1e-3)
-    config.setdefault('beta1', 0.9)
-    config.setdefault('beta2', 0.999)
+    beta1 = config.setdefault('beta1', 0.9)
+    beta2 = config.setdefault('beta2', 0.999)
     config.setdefault('epsilon', 1e-8)
     config.setdefault('m', np.zeros_like(w))
     config.setdefault('v', np.zeros_like(w))
@@ -140,7 +142,7 @@ def adam(w, dw, config=None):
 
     next_w = None
     ###########################################################################
-    # TODO: Implement the Adam update formula, storing the next value of w in #
+    # Implement the Adam update formula, storing the next value of w in #
     # the next_w variable. Don't forget to update the m, v, and t variables   #
     # stored in config.                                                       #
     #                                                                         #
@@ -149,7 +151,13 @@ def adam(w, dw, config=None):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    config['t'] += 1
+    config['m'] = beta1 * config['m'] + (1 - beta1) * dw
+    mt = config['m'] / (1 - beta1 ** config['t'])
+    config['v'] = beta2 * config['v'] + (1 - beta2) * dw ** 2
+    vt = config['v'] / (1 - beta2 ** config['t'])
+    w += -config['learning_rate'] * mt / (np.sqrt(vt) + config['epsilon'])
+    next_w = w
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
