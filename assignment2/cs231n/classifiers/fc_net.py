@@ -256,7 +256,7 @@ class FullyConnectedNet(object):
                 bn_param['mode'] = mode
         scores = None
         ############################################################################
-        # TODO: Implement the forward pass for the fully-connected net, computing  #
+        # Implement the forward pass for the fully-connected net, computing        #
         # the class scores for X and storing them in the scores variable.          #
         #                                                                          #
         # When using dropout, you'll need to pass self.dropout_param to each       #
@@ -289,6 +289,9 @@ class FullyConnectedNet(object):
                     else:
                         cache = None
             caches.append(cache)
+            if self.use_dropout and i != self.num_layers - 1:
+                scores, cache = dropout_forward(scores, self.dropout_param)
+                caches.append(cache)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -301,7 +304,7 @@ class FullyConnectedNet(object):
 
         loss, grads = 0.0, {}
         ############################################################################
-        # TODO: Implement the backward pass for the fully-connected net. Store the #
+        # Implement the backward pass for the fully-connected net. Store the       #
         # loss in the loss variable and gradients in the grads dictionary. Compute #
         # data loss using softmax, and make sure that grads[k] holds the gradients #
         # for self.params[k]. Don't forget to add L2 regularization!               #
@@ -325,12 +328,15 @@ class FullyConnectedNet(object):
             if i == self.num_layers - 1:
                 dx, grads[w], grads[b] = affine_backward(dx, caches.pop())
             else:
+                if self.use_dropout:
+                    dx = dropout_backward(dx, caches.pop())
                 if self.normalization is None:
                     dx, grads[w], grads[b] = affine_relu_backward(dx, caches.pop())
                 elif self.normalization == 'batchnorm':
                     dx, grads[w], grads[b], grads[gamma], grads[beta] = affine_bn_relu_backward(dx, caches.pop())
                 elif self.normalization == 'layernorm':
                     dx, grads[w], grads[b], grads[gamma], grads[beta] = affine_ln_relu_backward(dx, caches.pop())
+
             grads[w] += self.reg * self.params[w]
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
