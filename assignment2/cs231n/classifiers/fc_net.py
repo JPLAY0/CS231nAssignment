@@ -147,7 +147,7 @@ class FullyConnectedNet(object):
     self.params dictionary and will be learned using the Solver class.
     """
 
-    def  __init__(self, hidden_dims, input_dim=3 * 32 * 32, num_classes=10,
+    def __init__(self, hidden_dims, input_dim=3 * 32 * 32, num_classes=10,
                  dropout=1, normalization=None, reg=0.0,
                  weight_scale=1e-2, dtype=np.float32, seed=None):
         """
@@ -179,7 +179,7 @@ class FullyConnectedNet(object):
         self.params = {}
 
         ############################################################################
-        # TODO: Initialize the parameters of the network, storing all values in    #
+        # Initialize the parameters of the network, storing all values in          #
         # the self.params dictionary. Store weights and biases for the first layer #
         # in W1 and b1; for the second layer use W2 and b2, etc. Weights should be #
         # initialized from a normal distribution centered at 0 with standard       #
@@ -205,6 +205,9 @@ class FullyConnectedNet(object):
                 dim.append(hidden_dims[i])
             self.params['W' + str(i + 1)] = np.random.normal(scale=weight_scale, size=dim).astype(dtype)
             self.params['b' + str(i + 1)] = np.zeros(dim[1], dtype=dtype)
+            if i != self.num_layers - 1 and (self.normalization == 'batchnorm' or self.normalization == 'layernorm'):
+                self.params['gamma' + str(i + 1)] = np.ones(dim[1], dtype=dtype)
+                self.params['beta' + str(i + 1)] = np.zeros(dim[1], dtype=dtype)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -269,11 +272,22 @@ class FullyConnectedNet(object):
         scores = X
         caches = []
         for i in range(self.num_layers):
+            w = self.params['W' + str(i + 1)]
+            b = self.params['b' + str(i + 1)]
             if i == self.num_layers - 1:
-                scores, cache = affine_forward(scores, self.params['W' + str(i + 1)], self.params['b' + str(i + 1)])
+                scores, cache = affine_forward(scores, w, b)
             else:
-                scores, cache = affine_relu_forward(scores, self.params['W' + str(i + 1)],
-                                                    self.params['b' + str(i + 1)])
+                if self.normalization is None:
+                    scores, cache = affine_relu_forward(scores, w, b)
+                else:
+                    gamma = self.params['gamma' + str(i + 1)]
+                    beta = self.params['beta' + str(i + 1)]
+                    if self.normalization == 'batchnorm':
+                        scores, cache = affine_bn_relu_forward(scores, w, b, gamma, beta, self.bn_params[i])
+                    elif self.normalization == 'layernorm':
+                        scores, cache = affine_ln_relu_forward(scores, w, b, gamma, beta, self.bn_params[i])
+                    else:
+                        cache = None
             caches.append(cache)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -306,10 +320,17 @@ class FullyConnectedNet(object):
         for i in reversed(range(self.num_layers)):
             w = 'W' + str(i + 1)
             b = 'b' + str(i + 1)
+            gamma = 'gamma' + str(i + 1)
+            beta = 'beta' + str(i + 1)
             if i == self.num_layers - 1:
                 dx, grads[w], grads[b] = affine_backward(dx, caches.pop())
             else:
-                dx, grads[w], grads[b] = affine_relu_backward(dx, caches.pop())
+                if self.normalization is None:
+                    dx, grads[w], grads[b] = affine_relu_backward(dx, caches.pop())
+                elif self.normalization == 'batchnorm':
+                    dx, grads[w], grads[b], grads[gamma], grads[beta] = affine_bn_relu_backward(dx, caches.pop())
+                elif self.normalization == 'layernorm':
+                    dx, grads[w], grads[b], grads[gamma], grads[beta] = affine_ln_relu_backward(dx, caches.pop())
             grads[w] += self.reg * self.params[w]
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################

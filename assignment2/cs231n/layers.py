@@ -120,7 +120,7 @@ def relu_backward(dout, cache):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     dx = dout
-    dx[x < 0] = 0
+    dx[x <= 0] = 0
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -128,7 +128,7 @@ def relu_backward(dout, cache):
     return dx
 
 
-def batchnorm_forward(x, gamma, beta, bn_param):
+def batchnorm_forward(x: np.ndarray, gamma, beta, bn_param):
     """
     Forward pass for batch normalization.
 
@@ -177,7 +177,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     out, cache = None, None
     if mode == 'train':
         #######################################################################
-        # TODO: Implement the training-time forward pass for batch norm.      #
+        # Implement the training-time forward pass for batch norm.            #
         # Use minibatch statistics to compute the mean and variance, use      #
         # these statistics to normalize the incoming data, and scale and      #
         # shift the normalized data using gamma and beta.                     #
@@ -199,7 +199,13 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        mean = x.mean(0)
+        var = x.var(0)
+        running_mean = running_mean * momentum + mean * (1 - momentum)
+        running_var = running_var * momentum + var * (1 - momentum)
+        x_halt = (x - mean) / np.sqrt(var + eps)
+        cache = x, gamma, beta, x_halt, mean, var, eps
+        out = gamma * x_halt + beta
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -207,14 +213,16 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
     elif mode == 'test':
         #######################################################################
-        # TODO: Implement the test-time forward pass for batch normalization. #
+        # Implement the test-time forward pass for batch normalization.       #
         # Use the running mean and variance to normalize the incoming data,   #
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        x -= running_mean
+        x /= np.sqrt(running_var + eps)
+        out = x * gamma + beta
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -249,14 +257,22 @@ def batchnorm_backward(dout, cache):
     """
     dx, dgamma, dbeta = None, None, None
     ###########################################################################
-    # TODO: Implement the backward pass for batch normalization. Store the    #
+    # Implement the backward pass for batch normalization. Store the          #
     # results in the dx, dgamma, and dbeta variables.                         #
     # Referencing the original paper (https://arxiv.org/abs/1502.03167)       #
     # might prove to be helpful.                                              #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, gamma, beta, x_mid, mean, var, eps = cache
+    N = x.shape[0]
+    dbeta = dout.sum(0)
+    dgamma = (x_mid * dout).sum(0)
+
+    dx_hat = dout * gamma  # 乘法运算操作数顺序可以更换
+    dsigma = -0.5 * np.sum(dx_hat * (x - mean), axis=0) * np.power(var + eps, -1.5)
+    dmu = -np.sum(dx_hat / np.sqrt(var + eps), axis=0) - 2 * dsigma * np.sum(x - mean, axis=0) / N
+    dx = dx_hat / np.sqrt(var + eps) + 2.0 * dsigma * (x - mean) / N + dmu / N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -282,7 +298,7 @@ def batchnorm_backward_alt(dout, cache):
     """
     dx, dgamma, dbeta = None, None, None
     ###########################################################################
-    # TODO: Implement the backward pass for batch normalization. Store the    #
+    # Implement the backward pass for batch normalization. Store the          #
     # results in the dx, dgamma, and dbeta variables.                         #
     #                                                                         #
     # After computing the gradient with respect to the centered inputs, you   #
@@ -291,7 +307,15 @@ def batchnorm_backward_alt(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, gamma, beta, x_mid, mean, var, eps = cache
+    N = x.shape[0]
+    dbeta = dout.sum(0)
+    dgamma = (x_mid * dout).sum(0)
+
+    dx_hat = dout * gamma
+    dsigma = -0.5 * np.sum(dx_hat * (x - mean), axis=0) * np.power(var + eps, -1.5)
+    dmu = -np.sum(dx_hat / np.sqrt(var + eps), axis=0) - 2 * dsigma * np.sum(x - mean, axis=0) / N
+    dx = dx_hat / np.sqrt(var + eps) + 2.0 * dsigma * (x - mean) / N + dmu / N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -301,7 +325,7 @@ def batchnorm_backward_alt(dout, cache):
     return dx, dgamma, dbeta
 
 
-def layernorm_forward(x, gamma, beta, ln_param):
+def layernorm_forward(x: np.ndarray, gamma, beta, ln_param):
     """
     Forward pass for layer normalization.
 
@@ -326,7 +350,7 @@ def layernorm_forward(x, gamma, beta, ln_param):
     out, cache = None, None
     eps = ln_param.get('eps', 1e-5)
     ###########################################################################
-    # TODO: Implement the training-time forward pass for layer norm.          #
+    # Implement the training-time forward pass for layer norm.                #
     # Normalize the incoming data, and scale and  shift the normalized data   #
     #  using gamma and beta.                                                  #
     # HINT: this can be done by slightly modifying your training-time         #
@@ -337,7 +361,11 @@ def layernorm_forward(x, gamma, beta, ln_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    mean = x.mean(1).reshape(-1, 1)
+    var = x.var(1).reshape(-1, 1)
+    x_halt = (x - mean) / np.sqrt(var + eps)
+    cache = x, gamma, beta, x_halt, mean, var, eps
+    out = gamma * x_halt + beta
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -364,7 +392,7 @@ def layernorm_backward(dout, cache):
     """
     dx, dgamma, dbeta = None, None, None
     ###########################################################################
-    # TODO: Implement the backward pass for layer norm.                       #
+    # Implement the backward pass for layer norm.                             #
     #                                                                         #
     # HINT: this can be done by slightly modifying your training-time         #
     # implementation of batch normalization. The hints to the forward pass    #
@@ -372,7 +400,15 @@ def layernorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, gamma, beta, x_mid, mean, var, eps = cache
+    N = x.shape[1]
+    dbeta = dout.sum(0)
+    dgamma = (x_mid * dout).sum(0)
+
+    dx_hat = dout * gamma  # 乘法运算操作数顺序可以更换
+    dsigma = -0.5 * np.sum(dx_hat * (x - mean), axis=1) * np.power(var.squeeze() + eps, -1.5)
+    dmu = -np.sum(dx_hat / np.sqrt(var + eps), axis=1).squeeze() - 2 * dsigma * np.sum(x - mean, axis=1) / N
+    dx = dx_hat / np.sqrt(var + eps) + 2.0 * dsigma.reshape(-1, 1) * (x - mean) / N + dmu.reshape(-1, 1) / N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -416,7 +452,7 @@ def dropout_forward(x, dropout_param):
 
     if mode == 'train':
         #######################################################################
-        # TODO: Implement training phase forward pass for inverted dropout.   #
+        #  TODO: Implement training phase forward pass for inverted dropout.   #
         # Store the dropout mask in the mask variable.                        #
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
