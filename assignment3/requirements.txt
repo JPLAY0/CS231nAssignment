@@ -65,3 +65,12 @@ tornado==4.3
 traitlets==4.0.0
 Werkzeug==0.15.3
 yarl==1.2.4
+
+# pytorch
+# jupyterlab
+# h5py
+# scipy==1.2.1
+# cython
+# matplotlib
+# future
+# install all this package is enough,pillow and scipy should at the same chanel
