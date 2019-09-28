@@ -114,7 +114,7 @@ class CaptioningRNN(object):
 
         loss, grads = 0.0, {}
         ############################################################################
-        # TODO: Implement the forward and backward passes for the CaptioningRNN.   #
+        # Implement the forward and backward passes for the CaptioningRNN.         #
         # In the forward pass you will need to do the following:                   #
         # (1) Use an affine transformation to compute the initial hidden state     #
         #     from the image features. This should produce an array of shape (N, H)#
@@ -144,10 +144,10 @@ class CaptioningRNN(object):
         caches.append(c)
         word_in, c = word_embedding_forward(captions_in, W_embed)
         caches.append(c)
-        if self.cell_type == 'rnn':
+        if self.cell_type == 'rnn':  # must rnn or lstm
             out, c = rnn_forward(word_in, out, Wx, Wh, b)
         else:
-            pass
+            out, c = lstm_forward(word_in, out, Wx, Wh, b)
         caches.append(c)
         out, c = temporal_affine_forward(out, W_vocab, b_vocab)
         caches.append(c)
@@ -157,7 +157,7 @@ class CaptioningRNN(object):
         if self.cell_type == 'rnn':
             d_caption, dx, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dx, caches.pop())
         else:
-            pass
+            d_caption, dx, grads['Wx'], grads['Wh'], grads['b'] = lstm_backward(dx, caches.pop())
         grads['W_embed'] = word_embedding_backward(d_caption, caches.pop())
         _, grads['W_proj'], grads['b_proj'] = affine_backward(dx, caches.pop())
 
@@ -202,7 +202,7 @@ class CaptioningRNN(object):
         W_vocab, b_vocab = self.params['W_vocab'], self.params['b_vocab']
 
         ###########################################################################
-        # TODO: Implement test-time sampling for the model. You will need to      #
+        # Implement test-time sampling for the model. You will need to            #
         # initialize the hidden state of the RNN by applying the learned affine   #
         # transform to the input image features. The first word that you feed to  #
         # the RNN should be the <START> token; its value is stored in the         #
@@ -228,13 +228,14 @@ class CaptioningRNN(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         next_h, _ = affine_forward(features, W_proj, b_proj)
+        next_c = np.zeros((N, W_proj.shape[1]))
         word = self._start * np.ones((N,), dtype=np.int32)
         for i in range(max_length):
             word, _ = word_embedding_forward(word, W_embed)
             if self.cell_type == 'rnn':
                 next_h, _ = rnn_step_forward(word, next_h, Wx, Wh, b)
             else:
-                pass
+                next_h, next_c, _ = lstm_step_forward(word, next_h, next_c, Wx, Wh, b)
             out, _ = affine_forward(next_h, W_vocab, b_vocab)
             word = out.argmax(1)
             captions[:, i] = word
