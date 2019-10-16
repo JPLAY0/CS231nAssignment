@@ -1,2 +1,5 @@
 # CS231nAssignment
-2019斯坦福CS231n 作业实现
+
+## All finished!
+
+### If you have any question please feel free to open an issues.
